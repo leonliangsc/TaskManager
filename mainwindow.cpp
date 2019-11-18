@@ -1,6 +1,15 @@
 #include <QtWidgets>
+#include <iostream>
+#include <string>
+#include <sstream>
+#include <streambuf>
+#include <stdio.h>
+#include <stdlib.h>
+#include <fcntl.h>
 
 #include "mainwindow.h"
+
+using namespace std;
 
 MainWindow::MainWindow() {
     QWidget *widget = new QWidget;
@@ -45,14 +54,26 @@ void MainWindow::contextMenuEvent(QContextMenuEvent *event) {
 #endif // QT_NO_CONTEXTMENU
 
 void MainWindow::showOSVersion() {
-    infoLabel->setText(tr("macOS Cataline Version 10.15.1")); //TODO: remove hardcode
-    QString message = tr("OS release version");
+    system("system_profiler SPSoftwareDataType | grep \"System Version\" > temp.txt");
+    FILE *f = fopen("./temp.txt", "r");
+    char char_array[30];
+    fread(char_array, 30, 1, f);
+    system("rm ./temp.txt");
+
+    infoLabel->setText(char_array);
+    QString message = tr("OS version");
     statusBar()->showMessage(message);
 }
 
-void MainWindow::showKernalVersion() {
-    infoLabel->setText(tr("19.0.0")); //TODO: remove hardcode
-    QString message = tr("kernal version");
+void MainWindow::showKernelVersion() {
+    system("system_profiler SPSoftwareDataType | grep \"Kernel Version\" > temp.txt");
+    FILE *f = fopen("./temp.txt", "r");
+    char char_array[35];
+    fread(char_array, 35, 1, f);
+    system("rm ./temp.txt");
+
+    infoLabel->setText(char_array);
+    QString message = tr("kernel version");
     statusBar()->showMessage(message);
 }
 
@@ -72,8 +93,8 @@ void MainWindow::createActions() {
     osVersionAct = new QAction(tr("OS Version"), this);
     connect(osVersionAct, &QAction::triggered, this, &MainWindow::showOSVersion);
 
-    kernalVersionAct = new QAction(tr("Kernal Version"), this);
-    connect(kernalVersionAct, &QAction::triggered, this, &MainWindow::showKernalVersion);
+    kernelVersionAct = new QAction(tr("Kernel Version"), this);
+    connect(kernelVersionAct, &QAction::triggered, this, &MainWindow::showKernelVersion);
 
     memoryStatusAct = new QAction(tr("Memory Status"), this);
     connect(memoryStatusAct, &QAction::triggered, this, &MainWindow::showMemoryStatus);
@@ -85,7 +106,7 @@ void MainWindow::createActions() {
 void MainWindow::createMenus() {
     infoMenu = menuBar()->addMenu(tr("&Info"));
     infoMenu->addAction(osVersionAct);
-    infoMenu->addAction(kernalVersionAct);
+    infoMenu->addAction(kernelVersionAct);
     infoMenu->addAction(memoryStatusAct);
     infoMenu->addAction(processorInfoAct);
 }

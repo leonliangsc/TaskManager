@@ -25,7 +25,7 @@ protected:
 
 private slots:
     void showOSVersion();
-    void showKernalVersion();
+    void showKernelVersion();
     void showMemoryStatus();
     void showProcessorInfo();
 
@@ -36,7 +36,7 @@ private:
     QMenu *infoMenu;
 
     QAction *osVersionAct;
-    QAction *kernalVersionAct;
+    QAction *kernelVersionAct;
     QAction *memoryStatusAct;
     QAction *processorInfoAct;
 
