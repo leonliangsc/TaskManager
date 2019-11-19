@@ -40,8 +40,8 @@ MainWindow::MainWindow() {
     statusBar()->showMessage(message);
 
     setWindowTitle(tr("Task Manager"));
-    setMinimumSize(160, 160);
-    resize(480, 320);
+    setMinimumSize(480, 480);
+    resize(720, 480);
 }
 
 #ifndef QT_NO_CONTEXTMENU
@@ -54,10 +54,13 @@ void MainWindow::contextMenuEvent(QContextMenuEvent *event) {
 #endif // QT_NO_CONTEXTMENU
 
 void MainWindow::showOSVersion() {
-    system("system_profiler SPSoftwareDataType | grep \"System Version\" > temp.txt");
+    system("cat /proc/version | head -c 101 > temp.txt");
     FILE *f = fopen("./temp.txt", "r");
-    char char_array[30];
-    fread(char_array, 30, 1, f);
+    fseek(f, 0, SEEK_END);
+    int size = ftell(f);
+    fseek(f, 0, SEEK_SET);
+    char char_array[size];
+    fread(char_array, size, 1, f);
     system("rm ./temp.txt");
 
     infoLabel->setText(char_array);
@@ -66,10 +69,13 @@ void MainWindow::showOSVersion() {
 }
 
 void MainWindow::showKernelVersion() {
-    system("system_profiler SPSoftwareDataType | grep \"Kernel Version\" > temp.txt");
+    system("uname -r > temp.txt");
     FILE *f = fopen("./temp.txt", "r");
-    char char_array[35];
-    fread(char_array, 35, 1, f);
+    fseek(f, 0, SEEK_END);
+    int size = ftell(f);
+    fseek(f, 0, SEEK_SET);
+    char char_array[size];
+    fread(char_array, size, 1, f);
     system("rm ./temp.txt");
 
     infoLabel->setText(char_array);
@@ -78,13 +84,31 @@ void MainWindow::showKernelVersion() {
 }
 
 void MainWindow::showMemoryStatus() {
-    infoLabel->setText(tr("Memory left: infinity")); //TODO: remove hardcode
+    system("cat /proc/meminfo | head -n 3 > temp.txt");
+    FILE *f = fopen("./temp.txt", "r");
+    fseek(f, 0, SEEK_END);
+    int size = ftell(f);
+    fseek(f, 0, SEEK_SET);
+    char char_array[size];
+    fread(char_array, size, 1, f);
+    system("rm ./temp.txt");
+
+    infoLabel->setText(char_array);
     QString message = tr("memory status");
     statusBar()->showMessage(message);
 }
 
 void MainWindow::showProcessorInfo() {
-    infoLabel->setText(tr("3.4 GHz Quad-Core Intel Core i5")); //TODO: remove hardcode
+    system("cat /proc/cpuinfo | grep \"model name\" | head -n 1 > temp.txt");
+    FILE *f = fopen("./temp.txt", "r");
+    fseek(f, 0, SEEK_END);
+    int size = ftell(f);
+    fseek(f, 0, SEEK_SET);
+    char char_array[size];
+    fread(char_array, size, 1, f);
+    system("rm ./temp.txt");
+
+    infoLabel->setText(char_array);
     QString message = tr("processor information");
     statusBar()->showMessage(message);
 }
