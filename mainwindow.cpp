@@ -59,8 +59,9 @@ void MainWindow::showOSVersion() {
     fseek(f, 0, SEEK_END);
     int size = ftell(f);
     fseek(f, 0, SEEK_SET);
-    char char_array[size];
+    char char_array[size + 1];
     fread(char_array, size, 1, f);
+    char_array[size] = '\0';
     system("rm ./temp.txt");
 
     infoLabel->setText(char_array);
@@ -74,9 +75,10 @@ void MainWindow::showKernelVersion() {
     fseek(f, 0, SEEK_END);
     int size = ftell(f);
     fseek(f, 0, SEEK_SET);
-    char char_array[size];
+    char char_array[size + 1];
     fread(char_array, size, 1, f);
     system("rm ./temp.txt");
+    char_array[size] = '\0';
 
     infoLabel->setText(char_array);
     QString message = tr("kernel version");
@@ -89,9 +91,10 @@ void MainWindow::showMemoryStatus() {
     fseek(f, 0, SEEK_END);
     int size = ftell(f);
     fseek(f, 0, SEEK_SET);
-    char char_array[size];
+    char char_array[size + 1];
     fread(char_array, size, 1, f);
     system("rm ./temp.txt");
+    char_array[size] = '\0';
 
     infoLabel->setText(char_array);
     QString message = tr("memory status");
@@ -104,9 +107,10 @@ void MainWindow::showProcessorInfo() {
     fseek(f, 0, SEEK_END);
     int size = ftell(f);
     fseek(f, 0, SEEK_SET);
-    char char_array[size];
+    char char_array[size + 1];
     fread(char_array, size, 1, f);
     system("rm ./temp.txt");
+    char_array[size] = '\0';
 
     infoLabel->setText(char_array);
     QString message = tr("processor information");
