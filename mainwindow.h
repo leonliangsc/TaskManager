@@ -28,6 +28,7 @@ private slots:
     void showKernelVersion();
     void showMemoryStatus();
     void showProcessorInfo();
+    void showDiskStorage();
 
 private:
     void createActions();
@@ -39,6 +40,7 @@ private:
     QAction *kernelVersionAct;
     QAction *memoryStatusAct;
     QAction *processorInfoAct;
+    QAction *diskStorageAct;
 
     QLabel *infoLabel;
 

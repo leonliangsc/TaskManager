@@ -6,6 +6,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <fcntl.h>
+#include <fstream>
+#include <proc_service.h>
+#include <sys/statvfs.h>
+#include <sys/types.h>
 
 #include "mainwindow.h"
 
@@ -54,66 +58,126 @@ void MainWindow::contextMenuEvent(QContextMenuEvent *event) {
 #endif // QT_NO_CONTEXTMENU
 
 void MainWindow::showOSVersion() {
-    system("cat /proc/version | head -c 101 > temp.txt");
-    FILE *f = fopen("./temp.txt", "r");
-    fseek(f, 0, SEEK_END);
-    int size = ftell(f);
-    fseek(f, 0, SEEK_SET);
-    char char_array[size + 1];
-    fread(char_array, size, 1, f);
-    char_array[size] = '\0';
-    system("rm ./temp.txt");
+    FILE *f = fopen("/proc/version", "r");
+    if (f == NULL) {
+        cout << "Unable to open /proc/version" << endl;
+        fclose(f);
+    }
 
-    infoLabel->setText(char_array);
+    char buffer[2048];
+    size_t bytes_read = fread(buffer, 1, sizeof(buffer), f);
+    fclose(f);
+
+    if ((bytes_read == 0) || (bytes_read==sizeof(buffer))) {
+        perror("Reading failed\n");
+        exit(-1);
+    }
+
+    buffer[bytes_read] = '\0';
+    char *token = strtok(buffer, "(");
+
+    infoLabel->setText(token);
     QString message = tr("OS version");
     statusBar()->showMessage(message);
 }
 
 void MainWindow::showKernelVersion() {
-    system("uname -r > temp.txt");
-    FILE *f = fopen("./temp.txt", "r");
-    fseek(f, 0, SEEK_END);
-    int size = ftell(f);
-    fseek(f, 0, SEEK_SET);
-    char char_array[size + 1];
-    fread(char_array, size, 1, f);
-    system("rm ./temp.txt");
-    char_array[size] = '\0';
+    FILE *f = fopen("/proc/sys/kernel/version", "r");
+    if (f == NULL) {
+        cout << "Unable to open /proc/sys/kernel/version" << endl;
+        fclose(f);
+    }
 
-    infoLabel->setText(char_array);
+    char buffer[2048];
+    size_t bytes_read = fread(buffer, 1, sizeof(buffer), f);
+    fclose(f);
+
+    if ((bytes_read == 0) || (bytes_read==sizeof(buffer))) {
+        perror("Reading failed\n");
+        exit(-1);
+    }
+
+    buffer[bytes_read] = '\0';
+    char *start = buffer;
+    char *end = buffer;
+    end = strchr(buffer, '\n');
+    buffer[*end] = '\0';
+
+    infoLabel->setText(start);
     QString message = tr("kernel version");
     statusBar()->showMessage(message);
 }
 
 void MainWindow::showMemoryStatus() {
-    system("cat /proc/meminfo | head -n 3 > temp.txt");
-    FILE *f = fopen("./temp.txt", "r");
-    fseek(f, 0, SEEK_END);
-    int size = ftell(f);
-    fseek(f, 0, SEEK_SET);
-    char char_array[size + 1];
-    fread(char_array, size, 1, f);
-    system("rm ./temp.txt");
-    char_array[size] = '\0';
+    FILE *f = fopen("/proc/meminfo", "r");
+    if (f == NULL) {
+        cout << "Unable to open /proc/meminfo" << endl;
+        fclose(f);
+    }
 
-    infoLabel->setText(char_array);
+    char buffer[2048];
+    size_t bytes_read = fread(buffer, 1, sizeof(buffer), f);
+    fclose(f);
+
+    if ((bytes_read == 0) || (bytes_read==sizeof(buffer))) {
+        perror("Reading failed\n");
+        exit(-1);
+    }
+
+    buffer[bytes_read] = '\0';
+    char *token = buffer;
+
+    infoLabel->setText(token);
     QString message = tr("memory status");
     statusBar()->showMessage(message);
 }
 
 void MainWindow::showProcessorInfo() {
-    system("cat /proc/cpuinfo | grep \"model name\" | head -n 1 > temp.txt");
-    FILE *f = fopen("./temp.txt", "r");
-    fseek(f, 0, SEEK_END);
-    int size = ftell(f);
-    fseek(f, 0, SEEK_SET);
-    char char_array[size + 1];
-    fread(char_array, size, 1, f);
-    system("rm ./temp.txt");
-    char_array[size] = '\0';
+    FILE *f = fopen("/proc/cpuinfo", "r");
+    if (f == NULL) {
+        cout << "Unable to open /proc/cpuinfo" << endl;
+        fclose(f);
+    }
+
+    char buffer[2048];
+    size_t bytes_read = fread(buffer, 1, sizeof(buffer), f);
+    fclose(f);
+
+    if (bytes_read == 0) {
+        perror("Reading failed\n");
+        exit(-1);
+    }
+
+    buffer[bytes_read] = '\0';
+    char *start = strstr(buffer, "model name");
+    start += strlen("model name : ");
+    char *end = strstr(buffer, "stepping");
+    *end = '\0';
+
+    infoLabel->setText(start);
+    QString message = tr("processor information");
+    statusBar()->showMessage(message);
+}
+
+void MainWindow::showDiskStorage() {
+    struct statvfs *stat = (struct statvfs *) malloc(sizeof(struct statvfs));
+    statvfs("./main.cpp", stat);
+    const unsigned int GB = 1024 * 1024 * 1024;
+    double total = (double) (stat->f_blocks * stat->f_frsize) / GB;
+    double avail = (double) (stat->f_bfree * stat->f_blocks) / GB;
+    double used = total - avail;
+    double usedPercentage = (double) (used / total) * (double) 100.0;
+
+    char char_array[200];
+    sprintf(char_array, "Total: %.2fGB\n"
+    "Available: %.2fGB\n"
+    "Used: %.2fGB\n"
+    "Used Percentage: %.1f\%"
+    "\0",
+    total, avail, used, usedPercentage);
 
     infoLabel->setText(char_array);
-    QString message = tr("processor information");
+    QString message = tr("available disk storage");
     statusBar()->showMessage(message);
 }
 
@@ -129,6 +193,9 @@ void MainWindow::createActions() {
 
     processorInfoAct = new QAction(tr("Processor Info"), this);
     connect(processorInfoAct, &QAction::triggered, this, &MainWindow::showProcessorInfo);
+
+    diskStorageAct = new QAction(tr("Disk Storage"), this);
+    connect(diskStorageAct, &QAction::triggered, this, &MainWindow::showDiskStorage);
 }
 
 void MainWindow::createMenus() {
@@ -137,4 +204,5 @@ void MainWindow::createMenus() {
     infoMenu->addAction(kernelVersionAct);
     infoMenu->addAction(memoryStatusAct);
     infoMenu->addAction(processorInfoAct);
+    infoMenu->addAction(diskStorageAct);
 }
