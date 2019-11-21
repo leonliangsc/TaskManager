@@ -137,12 +137,9 @@ void MainWindow::showMemoryStatus() {
 
     buffer[bytes_read] = '\0';
     char *token = buffer;
-
-    if (infoLabel->isHidden()) {
-        infoLabel->show();
-        textBrowser->hide();
-    }
-    infoLabel->setText(token);
+    infoLabel->hide();
+    textBrowser->setText(token);
+    textBrowser->show();
     QString message = tr("memory status");
     statusBar()->showMessage(message);
 }
