@@ -25,6 +25,7 @@ MainWindow::MainWindow() {
     QWidget *bottomFiller = new QWidget;
     bottomFiller->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
 
+
     // vertical box layout
     QVBoxLayout *layout = new QVBoxLayout;
     layout->setContentsMargins(5, 5, 5, 5);
@@ -33,13 +34,21 @@ MainWindow::MainWindow() {
     layout->addWidget(bottomFiller);
     widget->setLayout(layout);
 
+    QTabWidget *tabWidget = new QTabWidget(widget);
+    tabWidget->setFixedSize(720, 480);
+    tabWidget->addTab(new QWidget(), tr("&System"));
+    tabWidget->addTab(new QWidget(), tr("&Processes"));
+    tabWidget->addTab(new QWidget(), tr("&Resources"));
+    tabWidget->addTab(new QWidget(), tr("&File Systems"));
+
+
     createActions();
     createMenus();
 
     QString message = tr("Try right click");
     statusBar()->showMessage(message);
 
-    setWindowTitle(tr("Task Manager"));
+    setWindowTitle(tr("System Monitor"));
     setMinimumSize(480, 480);
     resize(720, 480);
 }
@@ -128,9 +137,13 @@ void MainWindow::createActions() {
 }
 
 void MainWindow::createMenus() {
-    infoMenu = menuBar()->addMenu(tr("&Info"));
-    infoMenu->addAction(osVersionAct);
-    infoMenu->addAction(kernelVersionAct);
-    infoMenu->addAction(memoryStatusAct);
-    infoMenu->addAction(processorInfoAct);
+    infoMenu = menuBar()->addMenu(tr("&Monitor"));
+    infoMenu = menuBar()->addMenu(tr("&Edit"));
+    infoMenu = menuBar()->addMenu(tr("&View"));
+    infoMenu = menuBar()->addMenu(tr("&Help"));
+//    infoMenu = menuBar()->addMenu(tr("&Info"));
+//    infoMenu->addAction(osVersionAct);
+//    infoMenu->addAction(kernelVersionAct);
+//    infoMenu->addAction(memoryStatusAct);
+//    infoMenu->addAction(processorInfoAct);
 }
