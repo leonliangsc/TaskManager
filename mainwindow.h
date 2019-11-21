@@ -3,12 +3,14 @@
 
 #include <QMainWindow>
 #include <QTableWidget>
+#include <QTextBrowser>
 
 QT_BEGIN_NAMESPACE
 class QAction;
 class QActionGroup;
 class QLabel;
 class QMenu;
+//class QList;
 QT_END_NAMESPACE
 
 class MainWindow : public QMainWindow
@@ -29,6 +31,7 @@ private slots:
     void showMemoryStatus();
     void showProcessorInfo();
     void showDiskStorage();
+    void showProcesses();
 
 private:
     void createActions();
@@ -41,8 +44,10 @@ private:
     QAction *memoryStatusAct;
     QAction *processorInfoAct;
     QAction *diskStorageAct;
+    QAction *processAct;
 
     QLabel *infoLabel;
+    QTextBrowser *textBrowser;
 
 };
 #endif

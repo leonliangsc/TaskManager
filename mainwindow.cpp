@@ -25,6 +25,7 @@ MainWindow::MainWindow() {
     infoLabel = new QLabel(tr("<i>Choose a menu option</i>"));
     infoLabel->setFrameStyle(QFrame::StyledPanel | QFrame::Sunken);
     infoLabel->setAlignment(Qt::AlignCenter);
+    textBrowser = new QTextBrowser();
 
     QWidget *bottomFiller = new QWidget;
     bottomFiller->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
@@ -34,6 +35,8 @@ MainWindow::MainWindow() {
     layout->setContentsMargins(5, 5, 5, 5);
     layout->addWidget(topFiller);
     layout->addWidget(infoLabel);
+    layout->addWidget(textBrowser);
+    textBrowser->hide();
     layout->addWidget(bottomFiller);
     widget->setLayout(layout);
 
@@ -76,6 +79,10 @@ void MainWindow::showOSVersion() {
     buffer[bytes_read] = '\0';
     char *token = strtok(buffer, "(");
 
+    if (infoLabel->isHidden()) {
+        infoLabel->show();
+        textBrowser->hide();
+    }
     infoLabel->setText(token);
     QString message = tr("OS version");
     statusBar()->showMessage(message);
@@ -103,6 +110,10 @@ void MainWindow::showKernelVersion() {
     end = strchr(buffer, '\n');
     buffer[*end] = '\0';
 
+    if (infoLabel->isHidden()) {
+        infoLabel->show();
+        textBrowser->hide();
+    }
     infoLabel->setText(start);
     QString message = tr("kernel version");
     statusBar()->showMessage(message);
@@ -127,6 +138,10 @@ void MainWindow::showMemoryStatus() {
     buffer[bytes_read] = '\0';
     char *token = buffer;
 
+    if (infoLabel->isHidden()) {
+        infoLabel->show();
+        textBrowser->hide();
+    }
     infoLabel->setText(token);
     QString message = tr("memory status");
     statusBar()->showMessage(message);
@@ -176,8 +191,33 @@ void MainWindow::showDiskStorage() {
     "\0",
     total, avail, used, usedPercentage);
 
+    if (infoLabel->isHidden()) {
+        infoLabel->show();
+        textBrowser->hide();
+    }
     infoLabel->setText(char_array);
     QString message = tr("available disk storage");
+    statusBar()->showMessage(message);
+}
+
+void MainWindow::showProcesses() {
+    system("ps -ef > temp.txt");
+    FILE *f = fopen("./temp.txt", "r");
+    fseek(f, 0, SEEK_END);
+    int size = ftell(f);
+    fseek(f, 0, SEEK_SET);
+    char char_array[size + 1];
+    fread(char_array, size, 1, f);
+    system("rm ./temp.txt");
+    char_array[size] = '\0';
+
+    //creating a list for the output
+    QList<QString> processList;
+
+    textBrowser->setText(char_array);
+    textBrowser->show();
+    infoLabel->hide();
+    QString message = tr("processes");
     statusBar()->showMessage(message);
 }
 
@@ -196,6 +236,9 @@ void MainWindow::createActions() {
 
     diskStorageAct = new QAction(tr("Disk Storage"), this);
     connect(diskStorageAct, &QAction::triggered, this, &MainWindow::showDiskStorage);
+
+    processAct = new QAction(tr("Processes"), this);
+    connect(processAct, &QAction::triggered, this, &MainWindow::showProcesses);
 }
 
 void MainWindow::createMenus() {
@@ -205,4 +248,9 @@ void MainWindow::createMenus() {
     infoMenu->addAction(memoryStatusAct);
     infoMenu->addAction(processorInfoAct);
     infoMenu->addAction(diskStorageAct);
+  
+    infoMenu = menuBar()->addMenu(tr("&Process"));
+    infoMenu->addAction(processAct);
+
+    //infoMenu->addAction(); //USE FOR process
 }
