@@ -34,16 +34,20 @@ MainWindow::MainWindow() {
     layout->addWidget(bottomFiller);
     widget->setLayout(layout);
 
+
+    createActions();
+    createMenus();
+
+    QWidget *system = new QWidget();
+    basicInfo(system);
+
     QTabWidget *tabWidget = new QTabWidget(widget);
     tabWidget->setFixedSize(720, 480);
-    tabWidget->addTab(new QWidget(), tr("&System"));
+    tabWidget->addTab(system, tr("&System"));
     tabWidget->addTab(new QWidget(), tr("&Processes"));
     tabWidget->addTab(new QWidget(), tr("&Resources"));
     tabWidget->addTab(new QWidget(), tr("&File Systems"));
 
-
-    createActions();
-    createMenus();
 
     QString message = tr("Try right click");
     statusBar()->showMessage(message);
@@ -61,6 +65,14 @@ void MainWindow::contextMenuEvent(QContextMenuEvent *event) {
     menu.exec(event->globalPos());
 }
 #endif // QT_NO_CONTEXTMENU
+
+void MainWindow::basicInfo(QWidget *system) {
+    QVBoxLayout *layout = new QVBoxLayout;
+    layout->setContentsMargins(5, 5, 5, 5);
+    QLabel *title = new QLabel(tr("<i>Basic System Information</i>"));
+    layout->addWidget(title);
+    system->setLayout(layout);
+}
 
 void MainWindow::showOSVersion() {
     system("cat /proc/version | head -c 101 > temp.txt");
