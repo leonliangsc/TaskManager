@@ -4,6 +4,13 @@
 #include <QMainWindow>
 #include <QTableWidget>
 #include <QTextBrowser>
+#include <QtCharts/QLineSeries>
+#include <QChartView>
+#include <QPointF>
+#include <stack>
+
+using namespace std;
+using namespace QtCharts;
 
 QT_BEGIN_NAMESPACE
 class QAction;
@@ -31,7 +38,11 @@ private slots:
     void showMemoryStatus();
     void showProcessorInfo();
     void showDiskStorage();
+
     void showProcesses();
+
+    void showCPUHistory();
+    void drawCPUHistoryGraph();
 
 private:
     void createActions();
@@ -45,9 +56,14 @@ private:
     QAction *processorInfoAct;
     QAction *diskStorageAct;
     QAction *processAct;
+    QAction *showCPUHistoryAct;
 
     QLabel *infoLabel;
     QTextBrowser *textBrowser;
 
+/* ---- Resource page ---------*/
+    QChart *chart;
+    QChartView *chartView;
+    QLineSeries *CPUHistory;
 };
 #endif
