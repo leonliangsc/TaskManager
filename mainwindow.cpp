@@ -10,10 +10,16 @@
 #include <proc_service.h>
 #include <sys/statvfs.h>
 #include <sys/types.h>
+#include <unistd.h>
+#include <sys/time.h>
+#include <sys/resource.h>
+#include <thread>
 
 #include "mainwindow.h"
 
-using namespace std;
+#define MILLION 1000.0;
+#define BILLION 1000000000.0;
+
 
 MainWindow::MainWindow() {
     QWidget *widget = new QWidget;
@@ -25,7 +31,23 @@ MainWindow::MainWindow() {
     infoLabel = new QLabel(tr("<i>Choose a menu option</i>"));
     infoLabel->setFrameStyle(QFrame::StyledPanel | QFrame::Sunken);
     infoLabel->setAlignment(Qt::AlignCenter);
+
     textBrowser = new QTextBrowser();
+/*
+ * ---------------Resource page: CPU History---------------
+ */
+    CPUHistory = new QLineSeries();
+    drawCPUHistoryGraph();
+
+    chart = new QChart();
+    chart->legend()->hide();
+    chart->addSeries(CPUHistory);
+    chart->createDefaultAxes();
+    chart->setTitle("CPU History");
+
+    chartView = new QChartView(chart);
+    chartView->setRenderHint(QPainter::Antialiasing);
+/* --------------------------------------------------------*/
 
     QWidget *bottomFiller = new QWidget;
     bottomFiller->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
@@ -37,6 +59,8 @@ MainWindow::MainWindow() {
     layout->addWidget(infoLabel);
     layout->addWidget(textBrowser);
     textBrowser->hide();
+    layout->addWidget(chartView);
+    chartView->hide();
     layout->addWidget(bottomFiller);
     widget->setLayout(layout);
 
@@ -89,13 +113,13 @@ void MainWindow::showOSVersion() {
 }
 
 void MainWindow::showKernelVersion() {
-    FILE *f = fopen("/proc/sys/kernel/version", "r");
+    FILE *f = fopen("/etc/os-release", "r");
     if (f == NULL) {
-        cout << "Unable to open /proc/sys/kernel/version" << endl;
+        cout << "Unable to open /etc/os-release" << endl;
         fclose(f);
     }
 
-    char buffer[2048];
+    char buffer[1024];
     size_t bytes_read = fread(buffer, 1, sizeof(buffer), f);
     fclose(f);
 
@@ -106,9 +130,10 @@ void MainWindow::showKernelVersion() {
 
     buffer[bytes_read] = '\0';
     char *start = buffer;
-    char *end = buffer;
-    end = strchr(buffer, '\n');
-    buffer[*end] = '\0';
+    char *end = start;
+    end = strstr(end, "ID");
+    end -= 1;
+    *end = '\0';
 
     if (infoLabel->isHidden()) {
         infoLabel->show();
@@ -148,7 +173,6 @@ void MainWindow::showProcessorInfo() {
     FILE *f = fopen("/proc/cpuinfo", "r");
     if (f == NULL) {
         cout << "Unable to open /proc/cpuinfo" << endl;
-        fclose(f);
     }
 
     char buffer[2048];
@@ -163,8 +187,14 @@ void MainWindow::showProcessorInfo() {
     buffer[bytes_read] = '\0';
     char *start = strstr(buffer, "model name");
     start += strlen("model name : ");
-    char *end = strstr(buffer, "stepping");
+    char *end = strstr(buffer, "steppin");
+    end -= 1;
     *end = '\0';
+
+    if (infoLabel->isHidden()) {
+        infoLabel->show();
+        textBrowser->hide();
+    }
 
     infoLabel->setText(start);
     QString message = tr("processor information");
@@ -179,6 +209,8 @@ void MainWindow::showDiskStorage() {
     double avail = (double) (stat->f_bfree * stat->f_blocks) / GB;
     double used = total - avail;
     double usedPercentage = (double) (used / total) * (double) 100.0;
+    free(stat);
+    stat = NULL;
 
     char char_array[200];
     sprintf(char_array, "Total: %.2fGB\n"
@@ -218,6 +250,41 @@ void MainWindow::showProcesses() {
     statusBar()->showMessage(message);
 }
 
+void MainWindow::drawCPUHistoryGraph() {
+    FILE *cpuLog = fopen("../cpuLog.txt", "r");
+    if (cpuLog == NULL) {
+        perror("Unable to open cpuLog.txt");
+    }
+    char buffer[1024];
+    size_t bytes_read = fread(buffer, 1, sizeof(buffer), cpuLog);
+    fclose(cpuLog);
+
+    if (bytes_read == 0) {
+        perror("Reading failed\n");
+        exit(-1);
+    }
+
+    char *token = strtok(buffer, "\n");
+    for (int i = 0; i < 60; i++) {
+        double pctg;
+        sscanf(token, "%lf", &pctg);
+        *CPUHistory << QPoint(i, pctg);
+        cout << pctg << endl;
+        token = strtok(NULL, "\n");
+    }
+}
+
+
+void MainWindow::showCPUHistory() {
+    chart->adjustSize();
+    chartView->show();
+    infoLabel->hide();
+    textBrowser->hide();
+
+    QString message = tr("CPU History");
+    statusBar()->showMessage(message);
+}
+
 void MainWindow::createActions() {
     osVersionAct = new QAction(tr("OS Version"), this);
     connect(osVersionAct, &QAction::triggered, this, &MainWindow::showOSVersion);
@@ -236,6 +303,9 @@ void MainWindow::createActions() {
 
     processAct = new QAction(tr("Processes"), this);
     connect(processAct, &QAction::triggered, this, &MainWindow::showProcesses);
+
+    showCPUHistoryAct = new QAction(tr("CPU History"), this);
+    connect(showCPUHistoryAct, &QAction::triggered, this, &MainWindow::showCPUHistory);
 }
 
 void MainWindow::createMenus() {
@@ -248,6 +318,9 @@ void MainWindow::createMenus() {
   
     infoMenu = menuBar()->addMenu(tr("&Process"));
     infoMenu->addAction(processAct);
+
+    infoMenu = menuBar()->addMenu(tr("&Resources"));
+    infoMenu->addAction(showCPUHistoryAct);
 
     //infoMenu->addAction(); //USE FOR process
 }
