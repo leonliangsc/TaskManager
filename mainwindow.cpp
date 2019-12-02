@@ -8,6 +8,7 @@
 #include <fcntl.h>
 #include <fstream>
 #include <proc_service.h>
+#include <mntent.h>
 #include <sys/statvfs.h>
 #include <sys/types.h>
 #include <unistd.h>
@@ -36,17 +37,17 @@ MainWindow::MainWindow() {
 /*
  * ---------------Resource page: CPU History---------------
  */
-    CPUHistory = new QLineSeries();
-    drawCPUHistoryGraph();
+//    CPUHistory = new QLineSeries();
+//    drawCPUHistoryGraph();
 
-    chart = new QChart();
-    chart->legend()->hide();
-    chart->addSeries(CPUHistory);
-    chart->createDefaultAxes();
-    chart->setTitle("CPU History");
+//    chart = new QChart();
+//    chart->legend()->hide();
+//    chart->addSeries(CPUHistory);
+//    chart->createDefaultAxes();
+//    chart->setTitle("CPU History");
 
-    chartView = new QChartView(chart);
-    chartView->setRenderHint(QPainter::Antialiasing);
+//    chartView = new QChartView(chart);
+//    chartView->setRenderHint(QPainter::Antialiasing);
 /* --------------------------------------------------------*/
 
     QWidget *bottomFiller = new QWidget;
@@ -60,8 +61,8 @@ MainWindow::MainWindow() {
     layout->addWidget(infoLabel);
     layout->addWidget(textBrowser);
     textBrowser->hide();
-    layout->addWidget(chartView);
-    chartView->hide();
+    //layout->addWidget(chartView);
+    //chartView->hide();
     layout->addWidget(bottomFiller);
     widget->setLayout(layout);
 
@@ -111,6 +112,27 @@ void MainWindow::basicInfo(QWidget *system) {
 void MainWindow::fileSystem(QWidget *fileSystems) {
     QVBoxLayout *layout = new QVBoxLayout;
     layout->setContentsMargins(5, 5, 5, 5);
+    QVBoxLayout *innerLayout = new QVBoxLayout;
+    innerLayout->setContentsMargins(4,4,4,4);
+    QTableWidget *table = new QTableWidget;
+    table->setColumnCount(7);
+    QStringList tableHeader;
+    tableHeader<<"Device"<<"Directory"<<"Type"<<"Total"<<"Free"<<"Available"<<"Used";
+    table->setHorizontalHeaderLabels(tableHeader);
+    table->verticalHeader()->setVisible(false);
+
+    FILE *fp = setmntent("/etc/mtab", "r");
+    struct mntent *mounts;
+    int i = 0;
+    while ((mounts = getmntent(fp)) != NULL) {
+        struct statvfs stat;
+        statvfs(mounts->mnt_dir,&stat);
+
+
+    }
+    innerLayout->addWidget(table);
+    layout->addLayout(innerLayout);
+
     fileSystems->setLayout(layout);
 }
 
