@@ -47,6 +47,7 @@ private slots:
 private:
     void createActions();
     void createMenus();
+    void basicInfo(QWidget*);
 
     QMenu *infoMenu;
 

@@ -52,6 +52,7 @@ MainWindow::MainWindow() {
     QWidget *bottomFiller = new QWidget;
     bottomFiller->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
 
+
     // vertical box layout
     QVBoxLayout *layout = new QVBoxLayout;
     layout->setContentsMargins(5, 5, 5, 5);
@@ -64,13 +65,25 @@ MainWindow::MainWindow() {
     layout->addWidget(bottomFiller);
     widget->setLayout(layout);
 
+
     createActions();
     createMenus();
+
+    QWidget *system = new QWidget();
+    basicInfo(system);
+
+    QTabWidget *tabWidget = new QTabWidget(widget);
+    tabWidget->setFixedSize(720, 480);
+    tabWidget->addTab(system, tr("&System"));
+    tabWidget->addTab(new QWidget(), tr("&Processes"));
+    tabWidget->addTab(new QWidget(), tr("&Resources"));
+    tabWidget->addTab(new QWidget(), tr("&File Systems"));
+
 
     QString message = tr("Try right click");
     statusBar()->showMessage(message);
 
-    setWindowTitle(tr("Task Manager"));
+    setWindowTitle(tr("System Monitor"));
     setMinimumSize(480, 480);
     resize(720, 480);
 }
@@ -84,12 +97,21 @@ void MainWindow::contextMenuEvent(QContextMenuEvent *event) {
 }
 #endif // QT_NO_CONTEXTMENU
 
+void MainWindow::basicInfo(QWidget *system) {
+    QVBoxLayout *layout = new QVBoxLayout;
+    layout->setContentsMargins(5, 5, 5, 5);
+    QLabel *title = new QLabel(tr("<i>Basic System Information</i>"));
+    layout->addWidget(title);
+    system->setLayout(layout);
+}
+
 void MainWindow::showOSVersion() {
     FILE *f = fopen("/proc/version", "r");
     if (f == NULL) {
         cout << "Unable to open /proc/version" << endl;
         fclose(f);
     }
+
 
     char buffer[2048];
     size_t bytes_read = fread(buffer, 1, sizeof(buffer), f);
@@ -309,18 +331,27 @@ void MainWindow::createActions() {
 }
 
 void MainWindow::createMenus() {
-    infoMenu = menuBar()->addMenu(tr("&Info"));
-    infoMenu->addAction(osVersionAct);
-    infoMenu->addAction(kernelVersionAct);
-    infoMenu->addAction(memoryStatusAct);
-    infoMenu->addAction(processorInfoAct);
-    infoMenu->addAction(diskStorageAct);
+    infoMenu = menuBar()->addMenu(tr("&Monitor"));
+    infoMenu = menuBar()->addMenu(tr("&Edit"));
+    infoMenu = menuBar()->addMenu(tr("&View"));
+    infoMenu = menuBar()->addMenu(tr("&Help"));
+//    infoMenu = menuBar()->addMenu(tr("&Info"));
+//    infoMenu->addAction(osVersionAct);
+//    infoMenu->addAction(kernelVersionAct);
+//    infoMenu->addAction(memoryStatusAct);
+//    infoMenu->addAction(processorInfoAct);
+//    infoMenu = menuBar()->addMenu(tr("&Info"));
+//    infoMenu->addAction(osVersionAct);
+//    infoMenu->addAction(kernelVersionAct);
+//    infoMenu->addAction(memoryStatusAct);
+//    infoMenu->addAction(processorInfoAct);
+//    infoMenu->addAction(diskStorageAct);
   
-    infoMenu = menuBar()->addMenu(tr("&Process"));
-    infoMenu->addAction(processAct);
+//    infoMenu = menuBar()->addMenu(tr("&Process"));
+//    infoMenu->addAction(processAct);
 
-    infoMenu = menuBar()->addMenu(tr("&Resources"));
-    infoMenu->addAction(showCPUHistoryAct);
+//    infoMenu = menuBar()->addMenu(tr("&Resources"));
+//    infoMenu->addAction(showCPUHistoryAct);
 
-    //infoMenu->addAction(); //USE FOR process
+//    infoMenu->addAction(); //USE FOR process
 }

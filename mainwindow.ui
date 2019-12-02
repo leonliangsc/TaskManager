@@ -13,7 +13,44 @@
   <property name="windowTitle">
    <string>MainWindow</string>
   </property>
-  <widget class="QWidget" name="centralwidget"/>
+  <widget class="QWidget" name="centralwidget">
+   <widget class="QTabWidget" name="tabWidget">
+    <property name="geometry">
+     <rect>
+      <x>70</x>
+      <y>30</y>
+      <width>621</width>
+      <height>80</height>
+     </rect>
+    </property>
+    <property name="tabShape">
+     <enum>QTabWidget::Rounded</enum>
+    </property>
+    <property name="currentIndex">
+     <number>0</number>
+    </property>
+    <widget class="QWidget" name="system">
+     <attribute name="title">
+      <string>System</string>
+     </attribute>
+    </widget>
+    <widget class="QWidget" name="processes">
+     <attribute name="title">
+      <string>Processes</string>
+     </attribute>
+    </widget>
+    <widget class="QWidget" name="resources">
+     <attribute name="title">
+      <string>Resources</string>
+     </attribute>
+    </widget>
+    <widget class="QWidget" name="file_systems">
+     <attribute name="title">
+      <string>File Systems</string>
+     </attribute>
+    </widget>
+   </widget>
+  </widget>
   <widget class="QStatusBar" name="statusbar"/>
  </widget>
  <resources/>
