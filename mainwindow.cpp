@@ -41,12 +41,15 @@ MainWindow::MainWindow() {
     QWidget *system = new QWidget();
     basicInfo(system);
 
+    QWidget *fileSystems = new QWidget();
+    fileSystem(fileSystems);
+
     QTabWidget *tabWidget = new QTabWidget(widget);
     tabWidget->setFixedSize(720, 480);
     tabWidget->addTab(system, tr("&System"));
     tabWidget->addTab(new QWidget(), tr("&Processes"));
     tabWidget->addTab(new QWidget(), tr("&Resources"));
-    tabWidget->addTab(new QWidget(), tr("&File Systems"));
+    tabWidget->addTab(fileSystems, tr("&File Systems"));
 
 
     QString message = tr("Try right click");
@@ -72,6 +75,12 @@ void MainWindow::basicInfo(QWidget *system) {
     QLabel *title = new QLabel(tr("<i>Basic System Information</i>"));
     layout->addWidget(title);
     system->setLayout(layout);
+}
+
+void MainWindow::fileSystem(QWidget *fileSystems) {
+    QVBoxLayout *layout = new QVBoxLayout;
+    layout->setContentsMargins(5, 5, 5, 5);
+    fileSystems->setLayout(layout);
 }
 
 void MainWindow::showOSVersion() {

@@ -33,6 +33,7 @@ private:
     void createActions();
     void createMenus();
     void basicInfo(QWidget*);
+    void fileSystem(QWidget*);
 
     QMenu *infoMenu;
 
