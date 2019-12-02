@@ -25,6 +25,7 @@ MainWindow::MainWindow() {
     QWidget *bottomFiller = new QWidget;
     bottomFiller->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
 
+
     // vertical box layout
     QVBoxLayout *layout = new QVBoxLayout;
     layout->setContentsMargins(5, 5, 5, 5);
@@ -33,13 +34,25 @@ MainWindow::MainWindow() {
     layout->addWidget(bottomFiller);
     widget->setLayout(layout);
 
+
     createActions();
     createMenus();
+
+    QWidget *system = new QWidget();
+    basicInfo(system);
+
+    QTabWidget *tabWidget = new QTabWidget(widget);
+    tabWidget->setFixedSize(720, 480);
+    tabWidget->addTab(system, tr("&System"));
+    tabWidget->addTab(new QWidget(), tr("&Processes"));
+    tabWidget->addTab(new QWidget(), tr("&Resources"));
+    tabWidget->addTab(new QWidget(), tr("&File Systems"));
+
 
     QString message = tr("Try right click");
     statusBar()->showMessage(message);
 
-    setWindowTitle(tr("Task Manager"));
+    setWindowTitle(tr("System Monitor"));
     setMinimumSize(480, 480);
     resize(720, 480);
 }
@@ -52,6 +65,14 @@ void MainWindow::contextMenuEvent(QContextMenuEvent *event) {
     menu.exec(event->globalPos());
 }
 #endif // QT_NO_CONTEXTMENU
+
+void MainWindow::basicInfo(QWidget *system) {
+    QVBoxLayout *layout = new QVBoxLayout;
+    layout->setContentsMargins(5, 5, 5, 5);
+    QLabel *title = new QLabel(tr("<i>Basic System Information</i>"));
+    layout->addWidget(title);
+    system->setLayout(layout);
+}
 
 void MainWindow::showOSVersion() {
     system("cat /proc/version | head -c 101 > temp.txt");
@@ -128,9 +149,13 @@ void MainWindow::createActions() {
 }
 
 void MainWindow::createMenus() {
-    infoMenu = menuBar()->addMenu(tr("&Info"));
-    infoMenu->addAction(osVersionAct);
-    infoMenu->addAction(kernelVersionAct);
-    infoMenu->addAction(memoryStatusAct);
-    infoMenu->addAction(processorInfoAct);
+    infoMenu = menuBar()->addMenu(tr("&Monitor"));
+    infoMenu = menuBar()->addMenu(tr("&Edit"));
+    infoMenu = menuBar()->addMenu(tr("&View"));
+    infoMenu = menuBar()->addMenu(tr("&Help"));
+//    infoMenu = menuBar()->addMenu(tr("&Info"));
+//    infoMenu->addAction(osVersionAct);
+//    infoMenu->addAction(kernelVersionAct);
+//    infoMenu->addAction(memoryStatusAct);
+//    infoMenu->addAction(processorInfoAct);
 }
