@@ -41,7 +41,7 @@ MainWindow::MainWindow() {
 
     // vertical box layout
     QVBoxLayout *layout = new QVBoxLayout;
-//    layout->setContentsMargins(5, 5, 5, 5);
+    layout->setContentsMargins(5, 5, 5, 5);
     layout->addWidget(topFiller);
     layout->addWidget(infoLabel);
     layout->addWidget(textBrowser);
@@ -52,25 +52,6 @@ MainWindow::MainWindow() {
 
     createActions();
     createMenus();
-// <<<<<<< file_system
-
-//     QWidget *system = new QWidget();
-//     basicInfo(system);
-
-//     QWidget *fileSystems = new QWidget();
-//     fileSystem(fileSystems);
-
-//     QTabWidget *tabWidget = new QTabWidget(widget);
-//     tabWidget->setFixedSize(720, 480);
-//     tabWidget->addTab(system, tr("&System"));
-//     tabWidget->addTab(new QWidget(), tr("&Processes"));
-//     tabWidget->addTab(new QWidget(), tr("&Resources"));
-//     tabWidget->addTab(fileSystems, tr("&File Systems"));
-
-
-//     QString message = tr("Try right click");
-//     statusBar()->showMessage(message);
-// =======
     createTabs();
 
     setWindowTitle(tr("Task Manager"));
@@ -286,7 +267,7 @@ void MainWindow::showKernelVersion() {
     fclose(f);
 
     if ((bytes_read == 0) || (bytes_read==sizeof(buffer))) {
-        perror("Reading failed\n");
+        perror("Reading /etc/os-release failed\n");
         exit(-1);
     }
 
@@ -330,7 +311,7 @@ void MainWindow::showMemoryStatus() {
     fclose(f);
 
     if ((bytes_read == 0) || (bytes_read==sizeof(buffer))) {
-        perror("Reading failed\n");
+        perror("Reading /proc/meminfo failed\n");
         exit(-1);
     }
 
@@ -339,7 +320,7 @@ void MainWindow::showMemoryStatus() {
     char *end = start;
     end = strstr(end, "Buffers:");
     *end = '\0';
-    cout << start << endl;
+//    cout << start << endl;
 
     strcat(systemInfo, "\n\n");
     strcat(systemInfo, strdup(start));
@@ -356,7 +337,7 @@ void MainWindow::showProcessorInfo() {
     fclose(f);
 
     if (bytes_read == 0) {
-        perror("Reading failed\n");
+        perror("Reading /proc/cpuinfo failed\n");
         exit(-1);
     }
 
@@ -437,21 +418,26 @@ void MainWindow::drawCPUHistoryGraph() {
     fclose(cpuLog);
 
     if (bytes_read == 0) {
-        perror("Reading failed\n");
+        perror("Reading ./cpuLog.txt failed\n");
         exit(-1);
     }
 
     char *token = strtok(buffer, "\n");
-    for (int i = 0; i < 60; i++) {
-        double pctg;
-        sscanf(token, "%lf", &pctg);
-        if (pctg == NULL) {
+    if (token == NULL) {
+        for (int i = 0; i < 60; i++) {
             *CPUHistory << QPoint(i, 0);
-        } else {
-            *CPUHistory << QPoint(i, pctg);
-            token = strtok(NULL, "\n");
         }
-//        cout << pctg << endl;
+    } else {
+        for (int i = 0; i < 60; i++) {
+            double pctg;
+            if (token == NULL) {
+                *CPUHistory << QPoint(i, 0);
+            } else {
+                sscanf(token, "%lf", &pctg);
+                *CPUHistory << QPoint(i, pctg);
+                token = strtok(NULL, "\n");
+            }
+        }
     }
 }
 
@@ -464,20 +450,26 @@ void MainWindow::drawMemoryGraph() {
     size_t bytes_read = fread(buffer, 1, sizeof(buffer), cpuLog);
     fclose(cpuLog);
 
-    if (bytes_read == 0) {
-        perror("Reading failed\n");
-        exit(-1);
-    }
+//    if (bytes_read == 0) {
+//        perror("Reading ../memLog.txt failed\n");
+//        exit(-1);
+//    }
 
     char *token = strtok(buffer, "\n");
-    for (int i = 0; i < 60; i++) {
-        double pctg;
-        sscanf(token, "%lf", &pctg);
-        if (pctg == NULL) {
+    if (token == NULL) {
+        for (int i = 0; i < 60; i++) {
             *memHistory << QPoint(i, 0);
-        } else {
-            *memHistory << QPoint(i, pctg);
-            token = strtok(NULL, "\n");
+        }
+    } else {
+        for (int i = 0; i < 60; i++) {
+            double pctg;
+            if (token == NULL) {
+                *memHistory << QPoint(i, 0);
+            } else {
+                sscanf(token, "%lf", &pctg);
+                *memHistory << QPoint(i, pctg);
+                token = strtok(NULL, "\n");
+            }
         }
     }
 }
@@ -491,23 +483,30 @@ void MainWindow::drawSwapGraph() {
     size_t bytes_read = fread(buffer, 1, sizeof(buffer), cpuLog);
     fclose(cpuLog);
 
-    if (bytes_read == 0) {
-        perror("Reading failed\n");
-        exit(-1);
-    }
+//    if (bytes_read == 0) {
+//        perror("Reading swapLog.txt failed\n");
+//        exit(-1);
+//    }
 
     char *token = strtok(buffer, "\n");
-    for (int i = 0; i < 60; i++) {
-        double pctg;
-        sscanf(token, "%lf", &pctg);
-        if (pctg == NULL) {
+    if (token == NULL) {
+        for (int i = 0; i < 60; i++) {
             *swapHistory << QPoint(i, 0);
-        } else {
-            *swapHistory << QPoint(i, pctg);
-            token = strtok(NULL, "\n");
+        }
+    } else {
+        for (int i = 0; i < 60; i++) {
+            double pctg;
+            if (token == NULL) {
+                *swapHistory << QPoint(i, 0);
+            } else {
+                sscanf(token, "%lf", &pctg);
+                *swapHistory << QPoint(i, pctg);
+                token = strtok(NULL, "\n");
+            }
         }
     }
 }
+
 
 void MainWindow::drawRecGraph() {
     FILE *cpuLog = fopen("../netSpeed.txt", "r");
@@ -524,16 +523,21 @@ void MainWindow::drawRecGraph() {
     }
 
     char *token = strtok(buffer, "\n");
-    for (int i = 1; i < 61; i++) {
-        double rec, send;
-        sscanf(token, "%lf %lf", &rec, &send);
-        if ((rec == NULL) || (send == NULL)) {
+    if (token == NULL) {
+        for (int i = 0; i < 60; i++) {
             *recHistory << QPoint(i, 0);
-//            *sendHistory << QPoint(i, 0);
-        } else {
-            *recHistory << QPoint(i, rec);
-//            *sendHistory << QPoint(i, send);
-            token = strtok(NULL, "\n");
+        }
+    } else {
+        for (int i = 0; i < 60; i++) {
+            double pctg;
+            if (token == NULL) {
+                *recHistory << QPoint(i, 0);
+            } else {
+                double rec, send;
+                sscanf(token, "%lf %lf", &rec, &send);
+                *recHistory << QPoint(i, rec);
+                token = strtok(NULL, "\n");
+            }
         }
     }
 }
@@ -548,21 +552,26 @@ void MainWindow::drawSendGraph() {
     fclose(cpuLog);
 
     if (bytes_read == 0) {
-        perror("Reading failed\n");
+        perror("Reading netSpeed.txt failed\n");
         exit(-1);
     }
 
     char *token = strtok(buffer, "\n");
-    for (int i = 1; i < 61; i++) {
-        double rec, send;
-        sscanf(token, "%lf %lf", &rec, &send);
-        if ((rec == NULL) || (send == NULL)) {
-//            *recHistory << QPoint(i, 0);
+    if (token == NULL) {
+        for (int i = 0; i < 60; i++) {
             *sendHistory << QPoint(i, 0);
-        } else {
-//            *recHistory << QPoint(i, rec);
-            *sendHistory << QPoint(i, send);
-            token = strtok(NULL, "\n");
+        }
+    } else {
+        for (int i = 0; i < 60; i++) {
+            double pctg;
+            if (token == NULL) {
+                *sendHistory << QPoint(i, 0);
+            } else {
+                double rec, send;
+                sscanf(token, "%lf %lf", &rec, &send);
+                *sendHistory << QPoint(i, send);
+                token = strtok(NULL, "\n");
+            }
         }
     }
 }
@@ -578,13 +587,13 @@ void MainWindow::getTotalNetwork() {
     fclose(total);
 
     if (bytes_read == 0) {
-        perror("Reading failed\n");
+        perror("Reading netTotal.txt failed\n");
         exit(-1);
     }
     double totalRec, totalSend;
     sscanf(buffer, "%lf %lf", &totalRec, &totalSend);
     sprintf(totalNet, "Total received: %.2fGB\tTotal sent: %.2fGB\n", totalRec, totalSend);
-    cout << totalNet << endl;
+//    cout << totalNet << endl;
 }
 
 void MainWindow::showCPUHistory() {
