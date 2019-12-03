@@ -4,6 +4,7 @@
 #include <QMainWindow>
 #include <QTableWidget>
 #include <QTextBrowser>
+#include <QtWidgets>
 
 QT_BEGIN_NAMESPACE
 class QAction;
@@ -46,6 +47,7 @@ private:
 
     QLabel *infoLabel;
     QTextBrowser *textBrowser;
+    QPushButton *refresh;
 
 };
 #endif
