@@ -47,9 +47,19 @@ private slots:
 private:
     void createActions();
     void createMenus();
+    void createTabs();
     void basicInfo(QWidget*);
 
+    QWidget *widget;
     QMenu *infoMenu;
+
+    QTabWidget *tabWidget;
+    QWidget *system;
+    QWidget *processes;
+    QWidget *resources;
+    QWidget *fileSystem;
+
+    char *systemInfo;
 
     QAction *osVersionAct;
     QAction *kernelVersionAct;
@@ -62,9 +72,11 @@ private:
     QLabel *infoLabel;
     QTextBrowser *textBrowser;
 
+
 /* ---- Resource page ---------*/
     QChart *chart;
     QChartView *chartView;
     QLineSeries *CPUHistory;
+
 };
 #endif
