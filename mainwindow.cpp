@@ -34,21 +34,6 @@ MainWindow::MainWindow() {
     infoLabel->setAlignment(Qt::AlignCenter);
 
     textBrowser = new QTextBrowser();
-/*
- * ---------------Resource page: CPU History---------------
- */
-//    CPUHistory = new QLineSeries();
-//    drawCPUHistoryGraph();
-
-//    chart = new QChart();
-//    chart->legend()->hide();
-//    chart->addSeries(CPUHistory);
-//    chart->createDefaultAxes();
-//    chart->setTitle("CPU History");
-
-//    chartView = new QChartView(chart);
-//    chartView->setRenderHint(QPainter::Antialiasing);
-/* --------------------------------------------------------*/
 
     QWidget *bottomFiller = new QWidget;
     bottomFiller->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
@@ -56,13 +41,11 @@ MainWindow::MainWindow() {
 
     // vertical box layout
     QVBoxLayout *layout = new QVBoxLayout;
-    layout->setContentsMargins(5, 5, 5, 5);
+//    layout->setContentsMargins(5, 5, 5, 5);
     layout->addWidget(topFiller);
     layout->addWidget(infoLabel);
     layout->addWidget(textBrowser);
     textBrowser->hide();
-    //layout->addWidget(chartView);
-    //chartView->hide();
     layout->addWidget(bottomFiller);
     widget->setLayout(layout);
 
@@ -90,8 +73,8 @@ MainWindow::MainWindow() {
 // =======
     createTabs();
 
-    setWindowTitle(tr("System Monitor"));
-    setMinimumSize(480, 480);
+    setWindowTitle(tr("Task Manager"));
+    setMinimumSize(980, 980);
     resize(720, 480);
 }
 
@@ -118,6 +101,92 @@ void MainWindow::basicInfo(QWidget *system) {
 
     layout->addWidget(title);
     system->setLayout(layout);
+}
+
+void MainWindow::resourcesPage(QWidget *resources) {
+    QVBoxLayout *layout = new QVBoxLayout;
+    layout->setContentsMargins(5, 5, 5, 5);
+
+    QLabel *title = new QLabel(tr("Resources page"));
+    /*
+     * ---------------Resource page: CPU History---------------
+     */
+    CPUHistory = new QLineSeries();
+    drawCPUHistoryGraph();
+
+    chart = new QChart();
+    chart->legend()->hide();
+    chart->addSeries(CPUHistory);
+    chart->createDefaultAxes();
+    chart->setTitle("CPU History");
+
+    chartView = new QChartView(chart);
+    chartView->setRenderHint(QPainter::Antialiasing);
+
+    showCPUHistory();
+    /* --------------------------------------------------------*/
+    memHistory = new QLineSeries();
+    drawMemoryGraph();
+
+    memChart = new QChart();
+    memChart->legend()->hide();
+    memChart->addSeries(memHistory);
+    memChart->createDefaultAxes();
+    memChart->setTitle("Memory History");
+
+    memChartView = new QChartView(memChart);
+    memChartView->setRenderHint(QPainter::Antialiasing);
+
+    /*----------------------------------------------------------*/
+    swapHistory = new QLineSeries();
+    drawSwapGraph();
+
+    swapChart = new QChart();
+    swapChart->legend()->hide();
+    swapChart->addSeries(swapHistory);
+    swapChart->createDefaultAxes();
+    swapChart->setTitle("Swap History");
+
+    swapChartView = new QChartView(swapChart);
+    swapChartView->setRenderHint(QPainter::Antialiasing);
+
+    /*----------------------------------------------------------*/
+    recHistory = new QLineSeries();
+    drawRecGraph();
+    recChart = new QChart();
+    recChart->legend()->hide();
+    recChart->addSeries(recHistory);
+    recChart->createDefaultAxes();
+    recChart->setTitle("Receiving History");
+
+    recChartView = new QChartView(recChart);
+    recChartView->setRenderHint(QPainter::Antialiasing);
+
+
+    /*----------------------------------------------------------*/
+    sendHistory = new QLineSeries();
+    drawSendGraph();
+
+    sendChart = new QChart();
+    sendChart->legend()->hide();
+    sendChart->addSeries(sendHistory);
+    sendChart->createDefaultAxes();
+    sendChart->setTitle("Sending History");
+
+    sendChartView = new QChartView(sendChart);
+    sendChartView->setRenderHint(QPainter::Antialiasing);
+
+    getTotalNetwork();
+    QLabel *total = new QLabel(totalNet);
+
+    layout->addWidget(title);
+    layout->addWidget(chartView);
+    layout->addWidget(memChartView);
+    layout->addWidget(swapChartView);
+    layout->addWidget(recChartView);
+    layout->addWidget(sendChartView);
+    layout->addWidget(total);
+    resources->setLayout(layout);
 }
 
 void MainWindow::showFileSystem(QWidget *fileSystems) {
@@ -184,7 +253,6 @@ void MainWindow::showOSVersion() {
         cout << "Unable to open /proc/version" << endl;
         fclose(f);
     }
-
 
     char buffer[2048];
     size_t bytes_read = fread(buffer, 1, sizeof(buffer), f);
@@ -377,12 +445,147 @@ void MainWindow::drawCPUHistoryGraph() {
     for (int i = 0; i < 60; i++) {
         double pctg;
         sscanf(token, "%lf", &pctg);
-        *CPUHistory << QPoint(i, pctg);
-        cout << pctg << endl;
-        token = strtok(NULL, "\n");
+        if (pctg == NULL) {
+            *CPUHistory << QPoint(i, 0);
+        } else {
+            *CPUHistory << QPoint(i, pctg);
+            token = strtok(NULL, "\n");
+        }
+//        cout << pctg << endl;
     }
 }
 
+void MainWindow::drawMemoryGraph() {
+    FILE *cpuLog = fopen("../memLog.txt", "r");
+    if (cpuLog == NULL) {
+        perror("Unable to open memLog.txt");
+    }
+    char buffer[1024];
+    size_t bytes_read = fread(buffer, 1, sizeof(buffer), cpuLog);
+    fclose(cpuLog);
+
+    if (bytes_read == 0) {
+        perror("Reading failed\n");
+        exit(-1);
+    }
+
+    char *token = strtok(buffer, "\n");
+    for (int i = 0; i < 60; i++) {
+        double pctg;
+        sscanf(token, "%lf", &pctg);
+        if (pctg == NULL) {
+            *memHistory << QPoint(i, 0);
+        } else {
+            *memHistory << QPoint(i, pctg);
+            token = strtok(NULL, "\n");
+        }
+    }
+}
+
+void MainWindow::drawSwapGraph() {
+    FILE *cpuLog = fopen("../swapLog.txt", "r");
+    if (cpuLog == NULL) {
+        perror("Unable to open swapLog.txt");
+    }
+    char buffer[1024];
+    size_t bytes_read = fread(buffer, 1, sizeof(buffer), cpuLog);
+    fclose(cpuLog);
+
+    if (bytes_read == 0) {
+        perror("Reading failed\n");
+        exit(-1);
+    }
+
+    char *token = strtok(buffer, "\n");
+    for (int i = 0; i < 60; i++) {
+        double pctg;
+        sscanf(token, "%lf", &pctg);
+        if (pctg == NULL) {
+            *swapHistory << QPoint(i, 0);
+        } else {
+            *swapHistory << QPoint(i, pctg);
+            token = strtok(NULL, "\n");
+        }
+    }
+}
+
+void MainWindow::drawRecGraph() {
+    FILE *cpuLog = fopen("../netSpeed.txt", "r");
+    if (cpuLog == NULL) {
+        perror("Unable to open netSpeed.txt");
+    }
+    char buffer[1024];
+    size_t bytes_read = fread(buffer, 1, sizeof(buffer), cpuLog);
+    fclose(cpuLog);
+
+    if (bytes_read == 0) {
+        perror("Reading failed\n");
+        exit(-1);
+    }
+
+    char *token = strtok(buffer, "\n");
+    for (int i = 1; i < 61; i++) {
+        double rec, send;
+        sscanf(token, "%lf %lf", &rec, &send);
+        if ((rec == NULL) || (send == NULL)) {
+            *recHistory << QPoint(i, 0);
+//            *sendHistory << QPoint(i, 0);
+        } else {
+            *recHistory << QPoint(i, rec);
+//            *sendHistory << QPoint(i, send);
+            token = strtok(NULL, "\n");
+        }
+    }
+}
+
+void MainWindow::drawSendGraph() {
+    FILE *cpuLog = fopen("../netSpeed.txt", "r");
+    if (cpuLog == NULL) {
+        perror("Unable to open netSpeed.txt");
+    }
+    char buffer[1024];
+    size_t bytes_read = fread(buffer, 1, sizeof(buffer), cpuLog);
+    fclose(cpuLog);
+
+    if (bytes_read == 0) {
+        perror("Reading failed\n");
+        exit(-1);
+    }
+
+    char *token = strtok(buffer, "\n");
+    for (int i = 1; i < 61; i++) {
+        double rec, send;
+        sscanf(token, "%lf %lf", &rec, &send);
+        if ((rec == NULL) || (send == NULL)) {
+//            *recHistory << QPoint(i, 0);
+            *sendHistory << QPoint(i, 0);
+        } else {
+//            *recHistory << QPoint(i, rec);
+            *sendHistory << QPoint(i, send);
+            token = strtok(NULL, "\n");
+        }
+    }
+}
+
+void MainWindow::getTotalNetwork() {
+    FILE *total = fopen("../netTotal.txt", "r");
+    if (total == NULL) {
+        perror("Unable to open netTotal.txt");
+    }
+    totalNet = (char *)malloc(48);
+    char buffer[1024];
+    size_t bytes_read = fread(buffer, 1, sizeof(buffer), total);
+    fclose(total);
+
+    if (bytes_read == 0) {
+        perror("Reading failed\n");
+        exit(-1);
+    }
+    double totalRec, totalSend;
+    sscanf(buffer, "%lf %lf", &totalRec, &totalSend);
+    sprintf(totalNet, "Total received: %.2fGB\tTotal sent: %.2fGB\n", totalRec, totalSend);
+    cout << totalNet << endl;
+}
 
 void MainWindow::showCPUHistory() {
     chart->adjustSize();
@@ -390,7 +593,7 @@ void MainWindow::showCPUHistory() {
     infoLabel->hide();
     textBrowser->hide();
 
-    QString message = tr("CPU History");
+    QString message = tr("Resources");
     statusBar()->showMessage(message);
 }
 
@@ -422,37 +625,22 @@ void MainWindow::createMenus() {
     infoMenu = menuBar()->addMenu(tr("&Edit"));
     infoMenu = menuBar()->addMenu(tr("&View"));
     infoMenu = menuBar()->addMenu(tr("&Help"));
-//    infoMenu = menuBar()->addMenu(tr("&Info"));
-//    infoMenu->addAction(osVersionAct);
-//    infoMenu->addAction(kernelVersionAct);
-//    infoMenu->addAction(memoryStatusAct);
-//    infoMenu->addAction(processorInfoAct);
-//    infoMenu = menuBar()->addMenu(tr("&Info"));
-//    infoMenu->addAction(osVersionAct);
-//    infoMenu->addAction(kernelVersionAct);
-//    infoMenu->addAction(memoryStatusAct);
-//    infoMenu->addAction(processorInfoAct);
-//    infoMenu->addAction(diskStorageAct);
-  
-//    infoMenu = menuBar()->addMenu(tr("&Process"));
-//    infoMenu->addAction(processAct);
-
-//    infoMenu = menuBar()->addMenu(tr("&Resources"));
-//    infoMenu->addAction(showCPUHistoryAct);
-
-//    infoMenu->addAction(); //USE FOR process
 }
 
 void MainWindow::createTabs() {
         system = new QWidget();
         basicInfo(system);
+
         processes = new QWidget();
+
         resources = new QWidget();
+        resourcesPage(resources);
+
         fileSystem = new QWidget();
         showFileSystem(fileSystem);
 
         tabWidget = new QTabWidget(widget);
-        tabWidget->setFixedSize(720, 480);
+        tabWidget->setFixedSize(980, 980);
         tabWidget->addTab(system, tr("&System"));
         tabWidget->addTab(processes, tr("&Processes"));
         tabWidget->addTab(resources, tr("&Resources"));
