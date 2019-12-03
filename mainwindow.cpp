@@ -23,7 +23,7 @@
 #define SIZE_LEN (15)
 
 MainWindow::MainWindow() {
-    QWidget *widget = new QWidget;
+    widget = new QWidget;
     setCentralWidget(widget);
 
     QWidget *topFiller = new QWidget;
@@ -69,23 +69,26 @@ MainWindow::MainWindow() {
 
     createActions();
     createMenus();
+// <<<<<<< file_system
 
-    QWidget *system = new QWidget();
-    basicInfo(system);
+//     QWidget *system = new QWidget();
+//     basicInfo(system);
 
-    QWidget *fileSystems = new QWidget();
-    fileSystem(fileSystems);
+//     QWidget *fileSystems = new QWidget();
+//     fileSystem(fileSystems);
 
-    QTabWidget *tabWidget = new QTabWidget(widget);
-    tabWidget->setFixedSize(720, 480);
-    tabWidget->addTab(system, tr("&System"));
-    tabWidget->addTab(new QWidget(), tr("&Processes"));
-    tabWidget->addTab(new QWidget(), tr("&Resources"));
-    tabWidget->addTab(fileSystems, tr("&File Systems"));
+//     QTabWidget *tabWidget = new QTabWidget(widget);
+//     tabWidget->setFixedSize(720, 480);
+//     tabWidget->addTab(system, tr("&System"));
+//     tabWidget->addTab(new QWidget(), tr("&Processes"));
+//     tabWidget->addTab(new QWidget(), tr("&Resources"));
+//     tabWidget->addTab(fileSystems, tr("&File Systems"));
 
 
-    QString message = tr("Try right click");
-    statusBar()->showMessage(message);
+//     QString message = tr("Try right click");
+//     statusBar()->showMessage(message);
+// =======
+    createTabs();
 
     setWindowTitle(tr("System Monitor"));
     setMinimumSize(480, 480);
@@ -104,7 +107,15 @@ void MainWindow::contextMenuEvent(QContextMenuEvent *event) {
 void MainWindow::basicInfo(QWidget *system) {
     QVBoxLayout *layout = new QVBoxLayout;
     layout->setContentsMargins(5, 5, 5, 5);
-    QLabel *title = new QLabel(tr("<i>Basic System Information</i>"));
+    systemInfo = (char*) malloc(2048);
+    bzero(systemInfo, 2048);
+    showOSVersion();
+    showKernelVersion();
+    showMemoryStatus();
+    showProcessorInfo();
+    showDiskStorage();
+    QLabel *title = new QLabel(systemInfo);
+
     layout->addWidget(title);
     system->setLayout(layout);
 }
@@ -191,9 +202,8 @@ void MainWindow::showOSVersion() {
         infoLabel->show();
         textBrowser->hide();
     }
-    infoLabel->setText(token);
-    QString message = tr("OS version");
-    statusBar()->showMessage(message);
+    strcat(systemInfo, "OS Version:\n");
+    strcat(systemInfo, strdup(token));
 }
 
 void MainWindow::showKernelVersion() {
@@ -212,20 +222,32 @@ void MainWindow::showKernelVersion() {
         exit(-1);
     }
 
+    char version[50];
+    bzero(version, 50);
     buffer[bytes_read] = '\0';
+
+    // parse kernel version
     char *start = buffer;
+    start += strlen("NAME==");
     char *end = start;
-    end = strstr(end, "ID");
+    end = strstr(end, "VERSION=");
     end -= 1;
     *end = '\0';
+    strcat(version, start);
+    start = end;
+    start += strlen("VERSION===");
+    end = start;
+    end = strstr(end, "ID=");
+    end -= 2;
+    *end = '\0';
+    strcat(version, start);
 
     if (infoLabel->isHidden()) {
         infoLabel->show();
         textBrowser->hide();
     }
-    infoLabel->setText(start);
-    QString message = tr("kernel version");
-    statusBar()->showMessage(message);
+    strcat(systemInfo, "\n\nKernel Version:\n");
+    strcat(systemInfo, strdup(version));
 }
 
 void MainWindow::showMemoryStatus() {
@@ -245,12 +267,14 @@ void MainWindow::showMemoryStatus() {
     }
 
     buffer[bytes_read] = '\0';
-    char *token = buffer;
-    infoLabel->hide();
-    textBrowser->setText(token);
-    textBrowser->show();
-    QString message = tr("memory status");
-    statusBar()->showMessage(message);
+    char *start = buffer;
+    char *end = start;
+    end = strstr(end, "Buffers:");
+    *end = '\0';
+    cout << start << endl;
+
+    strcat(systemInfo, "\n\n");
+    strcat(systemInfo, strdup(start));
 }
 
 void MainWindow::showProcessorInfo() {
@@ -280,9 +304,8 @@ void MainWindow::showProcessorInfo() {
         textBrowser->hide();
     }
 
-    infoLabel->setText(start);
-    QString message = tr("processor information");
-    statusBar()->showMessage(message);
+    strcat(systemInfo, "\nProcessor Info:\n");
+    strcat(systemInfo, strdup(start));
 }
 
 void MainWindow::showDiskStorage() {
@@ -291,8 +314,8 @@ void MainWindow::showDiskStorage() {
     const unsigned int GB = 1024 * 1024 * 1024;
     double total = (double) (stat->f_blocks * stat->f_frsize) / GB;
     double avail = (double) (stat->f_bfree * stat->f_blocks) / GB;
-    double used = total - avail;
-    double usedPercentage = (double) (used / total) * (double) 100.0;
+    double used =  avail - total;
+    double usedPercentage = (double) (used / avail) * (double) 100.0;
     free(stat);
     stat = NULL;
 
@@ -302,36 +325,38 @@ void MainWindow::showDiskStorage() {
     "Used: %.2fGB\n"
     "Used Percentage: %.1f\%"
     "\0",
-    total, avail, used, usedPercentage);
+    avail, total, used, usedPercentage);
 
     if (infoLabel->isHidden()) {
         infoLabel->show();
         textBrowser->hide();
     }
-    infoLabel->setText(char_array);
-    QString message = tr("available disk storage");
+    strcat(systemInfo, "\n\nDisk Storage:\n");
+    strcat(systemInfo, strdup(char_array));
+
+    QString message = tr("System Information");
     statusBar()->showMessage(message);
 }
 
 void MainWindow::showProcesses() {
-    system("ps -ef > temp.txt");
-    FILE *f = fopen("./temp.txt", "r");
-    fseek(f, 0, SEEK_END);
-    int size = ftell(f);
-    fseek(f, 0, SEEK_SET);
-    char char_array[size + 1];
-    fread(char_array, size, 1, f);
-    system("rm ./temp.txt");
-    char_array[size] = '\0';
+//    system("ps -ef > temp.txt");
+//    FILE *f = fopen("./temp.txt", "r");
+//    fseek(f, 0, SEEK_END);
+//    int size = ftell(f);
+//    fseek(f, 0, SEEK_SET);
+//    char char_array[size + 1];
+//    fread(char_array, size, 1, f);
+//    system("rm ./temp.txt");
+//    char_array[size] = '\0';
 
-    //creating a list for the output
-    QList<QString> processList;
+//    //creating a list for the output
+//    QList<QString> processList;
 
-    textBrowser->setText(char_array);
-    textBrowser->show();
-    infoLabel->hide();
-    QString message = tr("processes");
-    statusBar()->showMessage(message);
+//    textBrowser->setText(char_array);
+//    textBrowser->show();
+//    infoLabel->hide();
+//    QString message = tr("processes");
+//    statusBar()->showMessage(message);
 }
 
 void MainWindow::drawCPUHistoryGraph() {
@@ -416,4 +441,19 @@ void MainWindow::createMenus() {
 //    infoMenu->addAction(showCPUHistoryAct);
 
 //    infoMenu->addAction(); //USE FOR process
+}
+
+void MainWindow::createTabs() {
+        system = new QWidget();
+        basicInfo(system);
+        processes = new QWidget();
+        resources = new QWidget();
+        fileSystem = new QWidget();
+
+        tabWidget = new QTabWidget(widget);
+        tabWidget->setFixedSize(720, 480);
+        tabWidget->addTab(system, tr("&System"));
+        tabWidget->addTab(processes, tr("&Processes"));
+        tabWidget->addTab(resources, tr("&Resources"));
+        tabWidget->addTab(fileSystem, tr("&File Systems"));
 }
