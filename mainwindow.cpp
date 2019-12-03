@@ -6,6 +6,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <fcntl.h>
+#include <ctype.h>
+#include <dirent.h>
+#include <unistd.h>
+#include <FL/Fl.H>
 #include <fstream>
 #include <proc_service.h>
 #include <mntent.h>
@@ -28,12 +32,15 @@ MainWindow::MainWindow() {
 
     QWidget *topFiller = new QWidget;
     topFiller->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
-
     infoLabel = new QLabel(tr("<i>Choose a menu option</i>"));
     infoLabel->setFrameStyle(QFrame::StyledPanel | QFrame::Sunken);
     infoLabel->setAlignment(Qt::AlignCenter);
 
     textBrowser = new QTextBrowser();
+    refresh = new QPushButton();
+    refresh->setText(tr("refresh"));
+    refresh->hide();
+
 
     QWidget *bottomFiller = new QWidget;
     bottomFiller->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
@@ -45,6 +52,7 @@ MainWindow::MainWindow() {
     layout->addWidget(topFiller);
     layout->addWidget(infoLabel);
     layout->addWidget(textBrowser);
+    layout->addWidget(refresh);
     textBrowser->hide();
     layout->addWidget(bottomFiller);
     widget->setLayout(layout);
@@ -387,25 +395,138 @@ void MainWindow::showDiskStorage() {
     statusBar()->showMessage(message);
 }
 
-void MainWindow::showProcesses() {
-//    system("ps -ef > temp.txt");
-//    FILE *f = fopen("./temp.txt", "r");
-//    fseek(f, 0, SEEK_END);
-//    int size = ftell(f);
-//    fseek(f, 0, SEEK_SET);
-//    char char_array[size + 1];
-//    fread(char_array, size, 1, f);
-//    system("rm ./temp.txt");
-//    char_array[size] = '\0';
+void MainWindow::showProcesses(QWidget *processes) {
+    QVBoxLayout *layout = new QVBoxLayout;
+    layout->setContentsMargins(5, 5, 5, 5);
 
-//    //creating a list for the output
-//    QList<QString> processList;
+    //creating a list for the output
+    QList<QString> processList;
 
-//    textBrowser->setText(char_array);
-//    textBrowser->show();
-//    infoLabel->hide();
-//    QString message = tr("processes");
-//    statusBar()->showMessage(message);
+    DIR* proc = opendir("/proc");
+    struct dirent* ent;
+    processList.append(" ");
+    while((ent = readdir(proc)) != NULL){
+        //sort out only the pid directories
+
+        if(!isdigit(ent->d_name[0])) {
+            continue;
+        }
+        fprintf(stderr, "%s\n", ent->d_name);
+        char use[6];
+        sprintf(use, "%s", (ent->d_name));
+
+
+        char *stat = (char *) malloc((sizeof(char)) * (11 + strlen(use)));
+        strcpy(stat, "/proc/");
+        strcat(stat, use);
+        strcat(stat, "/stat");
+        fprintf(stderr, "%s\n", stat);
+        fflush(stderr);
+
+        FILE *pro = fopen(stat, "r");
+
+        if (!pro) {
+            //perror("unable to open file.\n");
+            continue;
+        }
+
+        int pro_pid;
+        char comm[100];
+        char state;
+        int ppid;
+        int pgrp;
+        int session;
+        int tty_nr;
+        int tpgid;
+        unsigned int flags;
+        unsigned long int minflt;
+        unsigned long int cminflt;
+        unsigned long int magflt;
+        unsigned long int cmajflt;
+        unsigned long int utime;
+        unsigned long int stime;
+
+        fscanf(pro, "%d %s %c %d %d %d %d %d %u %lu %lu %lu %lu %lu %lu",
+        &pro_pid, comm, &state, &ppid, &pgrp, &session, &tty_nr, &tpgid,
+        &flags, &minflt, &cminflt, &magflt, &cmajflt, &utime, &stime);
+        long int nouse;
+        for (int i = 0; i < 6; i++) {
+            fscanf(pro, " %ld", &nouse);
+        }
+        unsigned long long starttime;
+        fscanf(pro, " %llu", &starttime);
+        unsigned long vsize;
+        fscanf(pro, " %lu", &vsize);
+
+
+        fprintf(stderr, "%d %s %c %d %lu %lu", pro_pid, comm, state, ppid, utime, stime);
+
+        /*
+        fseek(pro, 0, SEEK_END);
+        int size = ftell(pro);
+        fseek(pro, 0, SEEK_SET);
+        char char_array[size + 1];
+        fread(char_array, size, 1, pro);
+
+        fprintf(stderr, "%s\n", char_array);
+
+        char **save = (char **) malloc(sizeof(char));
+        strtok_r(char_array, "(", save);
+        char* name = strtok_r(NULL, ")", save);
+        */
+        char check[6];
+        sprintf(check, "%d", pro_pid);
+        char mem[6];
+        sprintf(mem, "%lu", vsize);
+        QString list;
+        list.append(comm);
+        list.append("  ");
+        list.append(check);
+        if (state == 'S') {
+            list.append("  sleeping  ");
+        } else if (state == 'Z') {
+            list.append("  zombie  ");
+        } else if ((state == 'X') || (state == 'x')) {
+            list.append("  dead  ");
+        } else if (state == 'R') {
+            list.append("  running  ");
+        } else if (state == 'T') {
+            list.append("  stopped  ");
+        } else if (state == 't') {
+            list.append("  tracing stop  ");
+        }else if (state == 'I') {
+            list.append("  Idle  ");
+        }
+        list.append(mem);
+
+        list.append(QString("\n"));
+        processList.append(list);
+
+        //free(save);
+
+
+        free(stat);
+    }
+
+
+    //redirect the qlist to string
+    QString str;
+    QDebug dStream(&str);
+    dStream.noquote() << processList;
+    str.remove(",");
+    str.remove(0, 1);
+    str.chop(2);
+
+
+    textBrowser->setText(str);
+    textBrowser->show();
+    infoLabel->hide();
+    refresh->show();
+    connect(refresh, SIGNAL(clicked()), this, SLOT(showProcesses(QWidget*)));
+    layout->addWidget(textBrowser);
+    layout->addWidget(refresh);
+    processes->setLayout(layout);
+    QString message = tr("processes");
 }
 
 void MainWindow::drawCPUHistoryGraph() {
@@ -604,6 +725,8 @@ void MainWindow::showCPUHistory() {
 
     QString message = tr("Resources");
     statusBar()->showMessage(message);
+    textBrowser->update();
+
 }
 
 void MainWindow::createActions() {
@@ -621,13 +744,24 @@ void MainWindow::createActions() {
 
     diskStorageAct = new QAction(tr("Disk Storage"), this);
     connect(diskStorageAct, &QAction::triggered, this, &MainWindow::showDiskStorage);
-
-    processAct = new QAction(tr("Processes"), this);
-    connect(processAct, &QAction::triggered, this, &MainWindow::showProcesses);
-
-    showCPUHistoryAct = new QAction(tr("CPU History"), this);
-    connect(showCPUHistoryAct, &QAction::triggered, this, &MainWindow::showCPUHistory);
 }
+
+//void MainWindow::createMenus() {
+//    infoMenu = menuBar()->addMenu(tr("&Info"));
+//    infoMenu->addAction(osVersionAct);
+//    infoMenu->addAction(kernelVersionAct);
+//    infoMenu->addAction(memoryStatusAct);
+//    infoMenu->addAction(processorInfoAct);
+//    infoMenu = menuBar()->addMenu(tr("&Process"));
+//    infoMenu->addAction(processAct);
+
+
+//    //infoMenu->addAction(); //USE FOR process
+//=======
+
+//    showCPUHistoryAct = new QAction(tr("CPU History"), this);
+//    connect(showCPUHistoryAct, &QAction::triggered, this, &MainWindow::showCPUHistory);
+//}
 
 void MainWindow::createMenus() {
     infoMenu = menuBar()->addMenu(tr("&Monitor"));
@@ -638,15 +772,18 @@ void MainWindow::createMenus() {
 
 void MainWindow::createTabs() {
         system = new QWidget();
-        basicInfo(system);
+//        basicInfo(system);
 
         processes = new QWidget();
 
         resources = new QWidget();
-        resourcesPage(resources);
+//        resourcesPage(resources);
 
         fileSystem = new QWidget();
         showFileSystem(fileSystem);
+
+        processes = new QWidget();
+        showProcesses(processes);
 
         tabWidget = new QTabWidget(widget);
         tabWidget->setFixedSize(980, 980);

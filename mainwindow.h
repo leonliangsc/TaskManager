@@ -4,6 +4,8 @@
 #include <QMainWindow>
 #include <QTableWidget>
 #include <QTextBrowser>
+#include <QtWidgets>
+
 #include <QtCharts/QLineSeries>
 #include <QChartView>
 #include <QPointF>
@@ -39,7 +41,7 @@ private slots:
     void showProcessorInfo();
     void showDiskStorage();
 
-    void showProcesses();
+    void showProcesses(QWidget*);
 
     void showCPUHistory();
     void drawCPUHistoryGraph();
@@ -54,6 +56,7 @@ private:
     void createMenus();
     void createTabs();
     void basicInfo(QWidget*);
+
     void resourcesPage(QWidget*);
     void showFileSystem(QWidget*);
 
@@ -78,6 +81,7 @@ private:
 
     QLabel *infoLabel;
     QTextBrowser *textBrowser;
+    QPushButton *refresh;
 
 
 /* ---- Resource page ---------*/
