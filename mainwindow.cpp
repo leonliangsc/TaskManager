@@ -269,7 +269,7 @@ void MainWindow::drawCPUHistoryGraph() {
         double pctg;
         sscanf(token, "%lf", &pctg);
         *CPUHistory << QPoint(i, pctg);
-        cout << pctg << endl;
+        // cout << pctg << endl;
         token = strtok(NULL, "\n");
     }
 }
