@@ -120,7 +120,7 @@ void MainWindow::basicInfo(QWidget *system) {
     system->setLayout(layout);
 }
 
-void MainWindow::fileSystem(QWidget *fileSystems) {
+void MainWindow::showFileSystem(QWidget *fileSystems) {
     QVBoxLayout *layout = new QVBoxLayout;
     layout->setContentsMargins(5, 5, 5, 5);
     QVBoxLayout *innerLayout = new QVBoxLayout;
@@ -449,6 +449,7 @@ void MainWindow::createTabs() {
         processes = new QWidget();
         resources = new QWidget();
         fileSystem = new QWidget();
+        showFileSystem(fileSystem);
 
         tabWidget = new QTabWidget(widget);
         tabWidget->setFixedSize(720, 480);
