@@ -9,6 +9,6 @@
  * Run **TaskManager** bring up the GUI
 ---------
  * Member:
-   Evan Wang
-   Shichuan Liang
-   Zixuan Zhou
+  * Evan Wang
+  * Shichuan Liang
+  * Zixuan Zhou
