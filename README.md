@@ -8,7 +8,6 @@
 ---------
  * Run **TaskManager** bring up the GUI
 ---------
- * Member:
+ * Contributors:
   * Evan Wang
-  * Shichuan Liang
   * Zixuan Zhou
