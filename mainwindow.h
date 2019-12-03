@@ -43,6 +43,11 @@ private slots:
 
     void showCPUHistory();
     void drawCPUHistoryGraph();
+    void drawMemoryGraph();
+    void drawSwapGraph();
+    void drawRecGraph();
+    void drawSendGraph();
+    void getTotalNetwork();
 
 private:
     void createActions();
@@ -79,5 +84,21 @@ private:
     QChartView *chartView;
     QLineSeries *CPUHistory;
 
+    QChart *memChart;
+    QChartView *memChartView;
+    QLineSeries *memHistory;
+
+    QChart *swapChart;
+    QChartView *swapChartView;
+    QLineSeries *swapHistory;
+
+    QChart *recChart;
+    QChartView *recChartView;
+    QLineSeries *recHistory;
+
+    QChart *sendChart;
+    QChartView *sendChartView;
+    QLineSeries *sendHistory;
+    char *totalNet;
 };
 #endif
