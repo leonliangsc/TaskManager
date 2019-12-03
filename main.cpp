@@ -93,8 +93,10 @@ void recordMemSwapUsage() {
     }
 
     fprintf(memLog, "%.2f\n", memPctg);
+    cout << "mem: " << memPctg << endl;
     fclose(memLog);
     fprintf(swapLog, "%.2f\n", swapPctg);
+    cout << "swap: " << swapPctg << endl;
     fclose(swapLog);
 }
 
@@ -124,11 +126,6 @@ void recordNetUsage() {
 
 
     // write
-//    cout << "Receive speed: " << receiveSpeed << endl;
-//    cout << "Transimit speed: " << transmitSpeed << endl;
-//    cout << "Total received: " << totalReceived << endl;
-//    cout << "Total transimited: " << totalTransmitted << endl;
-
     FILE *total = fopen("../netTotal.txt", "w");
     fprintf(total, "%.2f %.2f", totalReceived, totalTransmitted);
     fclose(total);
@@ -160,22 +157,26 @@ void init(){
            &transmit);
 
     // overwrite previous log
-//    FILE *log = fopen("./cpuLog.txt", "w");
-//    FILE *memLog = fopen("../memLog.txt", "w");
-//    FILE *swapLog = fopen("../swapLog.txt", "w");
-//    if ((log == NULL) || (memLog == NULL) || (swapLog == NULL)) {
-//        exit(-1);
-//    }
-//    fclose(log);
-//    fclose(memLog);
-//    fclose(swapLog);
+    FILE *log = fopen("../cpuLog.txt", "w+");
+    FILE *memLog = fopen("../memLog.txt", "w+");
+    FILE *swapLog = fopen("../swapLog.txt", "w+");
+    FILE *total = fopen("../netTotal.txt", "w+");
+    FILE *speed = fopen("../netSpeed.txt", "w+");
+    if ((log == NULL) || (memLog == NULL) || (swapLog == NULL)) {
+        exit(-1);
+    }
+    fclose(total);
+    fclose(speed);
+    fclose(log);
+    fclose(memLog);
+    fclose(swapLog);
 
     // record
     while(true) {
-        sleep(3);
         recordCPUUsage();
         recordMemSwapUsage();
         recordNetUsage();
+        sleep(3);
     }
 
 }
@@ -184,18 +185,30 @@ void init(){
 int main(int argc, char *argv[]) {
     QApplication app(argc, argv);
     MainWindow window;
+
     int pid = fork();
     if (pid < 0) {
         perror("fork error");
         exit(-1);
     }
     if (pid == 0) {
-        init(); // start recording stats
+        init();
     } else {
+        // overwrite
+        FILE *log = fopen("../cpuLog.txt", "w+");
+        FILE *memLog = fopen("../memLog.txt", "w+");
+        FILE *swapLog = fopen("../swapLog.txt", "w+");
+        FILE *total = fopen("../netTotal.txt", "w+");
+        FILE *speed = fopen("../netSpeed.txt", "w+");
+        fclose(total);
+        fclose(speed);
+        fclose(log);
+        fclose(memLog);
+        fclose(swapLog);
+        sleep(3);
         window.show();
+        app.exec();
         kill(pid, SIGKILL);
     }
-    return app.exec();
-//    init();
-//    return 1;
+    return 1;
 }
