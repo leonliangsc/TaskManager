@@ -8,6 +8,7 @@
 #include <fcntl.h>
 #include <fstream>
 #include <proc_service.h>
+#include <mntent.h>
 #include <sys/statvfs.h>
 #include <sys/types.h>
 #include <unistd.h>
@@ -17,9 +18,9 @@
 
 #include "mainwindow.h"
 
-#define MILLION 1000.0;
-#define BILLION 1000000000.0;
-
+#define MILLION 1000000.0;
+#define BILLION 1000000000.0
+#define SIZE_LEN (15)
 
 MainWindow::MainWindow() {
     widget = new QWidget;
@@ -45,14 +46,31 @@ MainWindow::MainWindow() {
     layout->addWidget(infoLabel);
     layout->addWidget(textBrowser);
     textBrowser->hide();
-//    layout->addWidget(chartView);
-//    chartView->hide();
     layout->addWidget(bottomFiller);
     widget->setLayout(layout);
 
 
     createActions();
     createMenus();
+// <<<<<<< file_system
+
+//     QWidget *system = new QWidget();
+//     basicInfo(system);
+
+//     QWidget *fileSystems = new QWidget();
+//     fileSystem(fileSystems);
+
+//     QTabWidget *tabWidget = new QTabWidget(widget);
+//     tabWidget->setFixedSize(720, 480);
+//     tabWidget->addTab(system, tr("&System"));
+//     tabWidget->addTab(new QWidget(), tr("&Processes"));
+//     tabWidget->addTab(new QWidget(), tr("&Resources"));
+//     tabWidget->addTab(fileSystems, tr("&File Systems"));
+
+
+//     QString message = tr("Try right click");
+//     statusBar()->showMessage(message);
+// =======
     createTabs();
 
     setWindowTitle(tr("Task Manager"));
@@ -169,6 +187,64 @@ void MainWindow::resourcesPage(QWidget *resources) {
     layout->addWidget(sendChartView);
     layout->addWidget(total);
     resources->setLayout(layout);
+}
+
+void MainWindow::showFileSystem(QWidget *fileSystems) {
+    QVBoxLayout *layout = new QVBoxLayout;
+    layout->setContentsMargins(5, 5, 5, 5);
+    QVBoxLayout *innerLayout = new QVBoxLayout;
+    innerLayout->setContentsMargins(4,4,4,4);
+    FILE *fp = setmntent("/etc/mtab", "r");
+    struct mntent *mounts;
+
+    int numMounts = 0;
+    while ((mounts = getmntent(fp)) != NULL) {
+        numMounts++;
+    }
+    rewind(fp);
+
+    int i = 0;
+    QTableWidget *table = new QTableWidget;
+    table->setRowCount(numMounts);
+    table->setColumnCount(7);
+    QStringList tableHeader;
+    tableHeader<<"Device"<<"Directory"<<"Type"<<"Total"<<"Free"<<"Available"<<"Used";
+    table->setHorizontalHeaderLabels(tableHeader);
+    table->verticalHeader()->setVisible(false);
+    while ((mounts = getmntent(fp)) != NULL) {
+        struct statvfs stat;
+        statvfs(mounts->mnt_dir, &stat);
+        char *device = mounts->mnt_fsname;
+        char *directory = mounts->mnt_dir;
+        char *type = mounts->mnt_type;
+        double total = stat.f_blocks * stat.f_frsize * 8.0 / 2097152;
+        double free = stat.f_bfree * 8.0 / 2097152;
+        double available = stat.f_bavail * 8.0 / 2097152;
+        double used = (stat.f_bsize - stat.f_bfree) * 8.0 / 2097152;
+        char *total_str = (char *) malloc(SIZE_LEN * sizeof(char));
+        char *free_str = (char *) malloc(SIZE_LEN * sizeof(char));
+        char *available_str = (char *) malloc(SIZE_LEN * sizeof(char));
+        char *used_str = (char *) malloc(SIZE_LEN * sizeof(char));
+        sprintf(total_str, "%10.1f GiB", total);
+        sprintf(free_str, "%10.1f GiB", free);
+        sprintf(available_str, "%10.1f GiB", available);
+        sprintf(used_str, "%10.1f GiB", used);
+
+        table->setItem(i, 0, new QTableWidgetItem(device));
+        table->setItem(i, 1, new QTableWidgetItem(directory));
+        table->setItem(i, 2, new QTableWidgetItem(type));
+        table->setItem(i, 3, new QTableWidgetItem(total_str));
+        table->setItem(i, 4, new QTableWidgetItem(free_str));
+        table->setItem(i, 5, new QTableWidgetItem(available_str));
+        table->setItem(i, 6, new QTableWidgetItem(used_str));
+        i++;
+    }
+    fclose(fp);
+    table->setVisible(true);
+    innerLayout->addWidget(table);
+    layout->addLayout(innerLayout);
+
+    fileSystems->setLayout(layout);
 }
 
 void MainWindow::showOSVersion() {
@@ -561,6 +637,7 @@ void MainWindow::createTabs() {
         resourcesPage(resources);
 
         fileSystem = new QWidget();
+        showFileSystem(fileSystem);
 
         tabWidget = new QTabWidget(widget);
         tabWidget->setFixedSize(980, 980);

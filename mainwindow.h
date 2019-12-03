@@ -55,6 +55,7 @@ private:
     void createTabs();
     void basicInfo(QWidget*);
     void resourcesPage(QWidget*);
+    void showFileSystem(QWidget*);
 
     QWidget *widget;
     QMenu *infoMenu;

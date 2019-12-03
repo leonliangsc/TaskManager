@@ -76,17 +76,17 @@ void recordCPUUsage() {
 int main(int argc, char *argv[]) {
     QApplication app(argc, argv);
     MainWindow window;
-    int pid = fork();
-    if (pid < 0) {
-        perror("fork error");
-        exit(-1);
-    }
-    if (pid == 0) {
-        recordCPUUsage();
-    } else {
+//    int pid = fork();
+//    if (pid < 0) {
+//        perror("fork error");
+//        exit(-1);
+//    }
+//    if (pid == 0) {
+//        recordCPUUsage();
+//    } else {
         window.show();
-        kill(pid, SIGKILL);
-    }
+//        kill(pid, SIGKILL);
+//    }
 //    recordCPUUsage();
     return app.exec();
 }
