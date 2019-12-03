@@ -49,7 +49,7 @@ private:
     void createMenus();
     void createTabs();
     void basicInfo(QWidget*);
-    void fileSystem(QWidget*);
+    void showFileSystem(QWidget*);
 
     QWidget *widget;
     QMenu *infoMenu;
