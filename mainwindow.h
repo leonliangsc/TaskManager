@@ -49,6 +49,7 @@ private:
     void createMenus();
     void createTabs();
     void basicInfo(QWidget*);
+    void resourcesPage(QWidget*);
 
     QWidget *widget;
     QMenu *infoMenu;

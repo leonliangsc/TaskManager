@@ -100,13 +100,40 @@ void MainWindow::basicInfo(QWidget *system) {
     system->setLayout(layout);
 }
 
+void MainWindow::resourcesPage(QWidget *resources) {
+    QVBoxLayout *layout = new QVBoxLayout;
+    layout->setContentsMargins(5, 5, 5, 5);
+
+    QLabel *title = new QLabel(tr("Resources page"));
+    /*
+     * ---------------Resource page: CPU History---------------
+     */
+    CPUHistory = new QLineSeries();
+    drawCPUHistoryGraph();
+
+    chart = new QChart();
+    chart->legend()->hide();
+    chart->addSeries(CPUHistory);
+    chart->createDefaultAxes();
+    chart->setTitle("CPU History");
+
+    chartView = new QChartView(chart);
+    chartView->setRenderHint(QPainter::Antialiasing);
+
+    showCPUHistory();
+    /* --------------------------------------------------------*/
+
+    layout->addWidget(title);
+    layout->addWidget(chartView);
+    resources->setLayout(layout);
+}
+
 void MainWindow::showOSVersion() {
     FILE *f = fopen("/proc/version", "r");
     if (f == NULL) {
         cout << "Unable to open /proc/version" << endl;
         fclose(f);
     }
-
 
     char buffer[2048];
     size_t bytes_read = fread(buffer, 1, sizeof(buffer), f);
@@ -299,9 +326,13 @@ void MainWindow::drawCPUHistoryGraph() {
     for (int i = 0; i < 60; i++) {
         double pctg;
         sscanf(token, "%lf", &pctg);
-        *CPUHistory << QPoint(i, pctg);
+        if (pctg == NULL) {
+            *CPUHistory << QPoint(i, 0);
+        } else {
+            *CPUHistory << QPoint(i, pctg);
+            token = strtok(NULL, "\n");
+        }
         cout << pctg << endl;
-        token = strtok(NULL, "\n");
     }
 }
 
@@ -368,8 +399,12 @@ void MainWindow::createMenus() {
 void MainWindow::createTabs() {
         system = new QWidget();
         basicInfo(system);
+
         processes = new QWidget();
+
         resources = new QWidget();
+        resourcesPage(resources);
+
         fileSystem = new QWidget();
 
         tabWidget = new QTabWidget(widget);
